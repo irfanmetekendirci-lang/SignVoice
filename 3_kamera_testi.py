@@ -1,54 +1,56 @@
-# Bu dosyanın amacı Kameradan gelen canlı koordinatları alıp, önceden eğittiğimiz o beyin dosyasına (.p) sormak
-# İlk dosyadan farkı ilk dosya kamerayı açmamızı sağlarken bu üzerinde işlem yaptırmasıdır
-
 import cv2
-import mediapipe as mp
 import numpy as np
 import pickle
+import mediapipe as mp
+from helpers import elAcilari_hesapla
 
-# 1. Eğitilmiş modelimizi yüklüyoruz
-with open("isaret_dili_modeli.p", "rb") as dosya: # 'rb' = Read Binary (İkili modda oku)
-    model = pickle.load(dosya)
+# --- 1. EĞİTİLMİŞ MODELİ YÜKLEME ---
+try:
+    with open('isaret_dili_modeli.p', 'rb') as f:
+        model = pickle.load(f)
+    print("Model başarıyla yüklendi!")
+except Exception as e:
+    print(f"HATA: Model dosyası yüklenemedi! {e}")
+    exit()
 
-print("Eğitilmiş yapay zeka modeli hafızaya yüklendi!")
-
-# 2. Kamera ve MediaPipe kurulumu
-mp_drawing = mp.solutions.drawing_utils
+# --- 2. MEDIAPIPE EL TAKİP KURULUMU ---
 mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
 
 hands = mp_hands.Hands(
     static_image_mode=False,
-    max_num_hands=2, 
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7
+    max_num_hands=2,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
 )
 
-# Kamerayı başlatıyoruz
+# --- 3. KAMERA BAŞLATMA ---
 cap = cv2.VideoCapture(0)
 
-# 3. Kameranın çalışacağı sonsuz döngü
-while True:
-    durum, kare = cap.read()
-    if not durum: 
-        break
-        
-    # Fotoğraf veri seti aynalanmadığı için cv2.flip'i kaldırabiliriz veya orijinal tutabiliriz.
-    # Eğer tahminler yine şaşarsa alt satırdaki flip'i kaldırılıp denenecek:
-    #kare = cv2.flip(kare, 1) 
-    
-    RGB_kare = cv2.cvtColor(kare, cv2.COLOR_BGR2RGB)
-    
-    # MediaPipe ile eli tespit ediyoruz
-    sonuclar = hands.process(RGB_kare)
+print("\nKamera başlatıldı. Çıkmak için 'q' tuşuna basın...\n")
 
-    # 126 elemanlı veri listemizi hazırlıyoruz
-    veri_listesi = []
+while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+        print("Kamera görüntüsü alınamıyor.")
+        continue
 
-    # Eğer ekranda tespit edilen el/eller varsa:
-    if sonuclar.multi_hand_landmarks:
-        for hand_landmarks in sonuclar.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(kare, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-            
+    # Aynalama ve Renk Dönüşümü
+    image = cv2.flip(image, 1)
+    img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = hands.process(img_rgb)
+
+    data_aux = []
+
+    # El Tespiti Var mı Kontrolü
+    if results.multi_hand_landmarks:
+        # Tespiti ekrana çiz
+        for hand_landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(
+                image, hand_landmarks, mp_hands.HAND_CONNECTIONS
+            )
+
+            # 1. Min-Max Sınırları
             x_coords = [lm.x for lm in hand_landmarks.landmark]
             y_coords = [lm.y for lm in hand_landmarks.landmark]
             z_coords = [lm.z for lm in hand_landmarks.landmark]
@@ -61,30 +63,47 @@ while True:
             height_y = (max_y - min_y) if (max_y - min_y) > 0 else 1.0
             depth_z = (max_z - min_z) if (max_z - min_z) > 0 else 1.0
 
+            # 2. Koordinat Normalizasyonu (63 Eleman)
             for lm in hand_landmarks.landmark:
-                veri_listesi.extend([
+                data_aux.extend([
                     (lm.x - min_x) / width_x,
                     (lm.y - min_y) / height_y,
                     (lm.z - min_z) / depth_z
                 ])
 
-        if len(sonuclar.multi_hand_landmarks) == 1:
-            veri_listesi.extend([0.0] * 63)
+            # 3. Parmak Açıları (14 Eleman)
+            acilar = elAcilari_hesapla(hand_landmarks.landmark)
+            data_aux.extend(acilar)
 
-        tahmin = model.predict([veri_listesi])
-        tahmin_edilen_kelime = tahmin[0]
+        # Tek el varsa kalan 77 elemanı 0.0 ile doldur
+        if len(results.multi_hand_landmarks) == 1:
+            data_aux.extend([0.0] * 77)
 
-        # Tahmin edilen kelimeyi canlı kameranın üzerine yazdırıyoruz
-        cv2.putText(kare, f"Tahmin: {tahmin_edilen_kelime}", (10, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        # Modeldan Tahmin ve Yüzde (Olasılık) Alma
+        try:
+            # Tüm sınıfların olasılık dağılımı (Örn: [0.01, 0.94, 0.05...])
+            probabilities = model.predict_proba([np.array(data_aux)])[0]
+            
+            # En yüksek olasılıklı sınıfın indeksi ve yüzdesi
+            max_idx = np.argmax(probabilities)
+            confidence = probabilities[max_idx] * 100
+            predicted_character = model.classes_[max_idx]
 
-    # İşlenmiş kareyi ekranda gösteriyoruz
-    cv2.imshow("SignVoice - Canli Isaret Dili Testi", kare)
+            # Ekrana Tahmini ve Yüzdesini Yaz
+            metin = f"Harf: {predicted_character} (%{confidence:.1f})"
+            cv2.putText(image, metin, (20, 80),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3)
+        except Exception as e:
+            pass
+    else:
+        # El Kadrajda Yoksa Bilgi Yazısı Göster
+        cv2.putText(image, "El Bekleniyor...", (20, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 165, 255), 3)
 
-    # 'q' tuşuna basılırsa döngüden çık
+    cv2.imshow('SignVoice - Canlı Kamera Testi', image)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# Temizlik işlemleri
 cap.release()
 cv2.destroyAllWindows()

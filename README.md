@@ -31,10 +31,13 @@
 
 ### 📂 Repository Structure
 SignVoice/
- ├── 1_veri_toplama.py      # Landmark extraction & data collection script
- ├── 2_model_egitimi.py     # Random Forest model training & evaluation
- ├── 3_kamera_testi.py      # Real-time webcam inference script
- └── dataset_processor.py   # Spatial normalization & feature processing logic
+ ├── 1_veri_toplama.py          # Raw dataset collection from webcams/images
+ ├── dataset_processor.py       # Spatial normalization (min-max) & feature pipeline
+ ├── helpers.py                 # 3D vector geometry & finger angle calculations
+ ├── 2_model_egitimi.py         # Random Forest model training & accuracy evaluation
+ ├── 3_kamera_testi.py          # Real-time webcam inference with confidence scores
+ ├── isaret_dili_verileri.csv   # Processed 154-feature dataset (Generated)
+ └── isaret_dili_modeli.p       # Trained Random Forest classifier binary (Generated)
 
 ---
 
