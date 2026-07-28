@@ -2,7 +2,9 @@ import cv2
 import numpy as np
 import pickle
 import mediapipe as mp
-from helpers import elAcilari_hesapla
+from helpers import elAcilari_hesapla, filtreli_tahmini_bul, kelimeye_harf_ekle, kelimeyi_seslendir
+from collections import deque, Counter
+import time
 
 # --- 1. EĞİTİLMİŞ MODELİ YÜKLEME ---
 try:
@@ -26,6 +28,14 @@ hands = mp_hands.Hands(
 
 # --- 3. KAMERA BAŞLATMA ---
 cap = cv2.VideoCapture(0)
+
+tahmin_havuzu = deque(maxlen=7)  
+
+mevcut_kelime = ""
+son_harf = ""
+baslangic_zamani = time.time()
+harf_eklendi_mi = False
+
 
 print("\nKamera başlatıldı. Çıkmak için 'q' tuşuna basın...\n")
 
@@ -87,23 +97,55 @@ while cap.isOpened():
             # En yüksek olasılıklı sınıfın indeksi ve yüzdesi
             max_idx = np.argmax(probabilities)
             confidence = probabilities[max_idx] * 100
-            predicted_character = model.classes_[max_idx]
+            ham_tahmin = model.classes_[max_idx]
 
-            # Ekrana Tahmini ve Yüzdesini Yaz
-            metin = f"Harf: {predicted_character} (%{confidence:.1f})"
+           # 1. Filtreleme Katmanı
+            kararli_harf = filtreli_tahmini_bul(ham_tahmin)
+
+            # 2. Anlık Harfi Ekrana Yaz
+            metin = f"Harf: {kararli_harf} (%{confidence:.1f})"
             cv2.putText(image, metin, (20, 80),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3)
+
+            # 3. KELİME BİRLEŞTİRME (Güvenlik Kapısı)
+            if confidence > 50:
+                mevcut_kelime, son_harf, baslangic_zamani, harf_eklendi_mi = kelimeye_harf_ekle(
+                    kararli_harf, son_harf, baslangic_zamani, mevcut_kelime, harf_eklendi_mi
+                )
+            else:
+                # Güven %50'nin altındaysa zamanlayıcıyı sıfırla ki hatalı harf birikmesin
+                baslangic_zamani = time.time()
+
+            # 4. Oluşan Kelimeyi Ekranın Altına Yaz
+            cv2.putText(image, f"Kelime: {mevcut_kelime}", (20, 140),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 3)
+            
         except Exception as e:
             pass
     else:
         # El Kadrajda Yoksa Bilgi Yazısı Göster
         cv2.putText(image, "El Bekleniyor...", (20, 80),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 165, 255), 3)
+        tahmin_havuzu.clear()
 
     cv2.imshow('SignVoice - Canlı Kamera Testi', image)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key = cv2.waitKey(1) & 0xFF
+
+    # 'q' tuşuna basılırsa kamerayı kapat
+    if key == ord('q'):
         break
+
+    # 'c' tuşuna basılırsa kelimeyi sıfırla
+    if key == ord('c'):
+        mevcut_kelime = ""
+        son_harf = ""
+        harf_eklendi_mi = False
+        print("Kelime sıfırlandı!")
+
+    # 's' tuşuna basılırsa biriken kelimeyi seslendir
+    if key == ord('s'):
+        kelimeyi_seslendir(mevcut_kelime)
 
 cap.release()
 cv2.destroyAllWindows()
