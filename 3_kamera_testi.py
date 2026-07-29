@@ -5,6 +5,7 @@ import mediapipe as mp
 from helpers import elAcilari_hesapla, filtreli_tahmini_bul, kelimeye_harf_ekle, kelimeyi_seslendir
 from collections import deque, Counter
 import time
+import threading
 
 # --- 1. EĞİTİLMİŞ MODELİ YÜKLEME ---
 try:
@@ -35,7 +36,6 @@ mevcut_kelime = ""
 son_harf = ""
 baslangic_zamani = time.time()
 harf_eklendi_mi = False
-
 
 print("\nKamera başlatıldı. Çıkmak için 'q' tuşuna basın...\n")
 
@@ -91,19 +91,22 @@ while cap.isOpened():
 
         # Modeldan Tahmin ve Yüzde (Olasılık) Alma
         try:
-            # Tüm sınıfların olasılık dağılımı (Örn: [0.01, 0.94, 0.05...])
             probabilities = model.predict_proba([np.array(data_aux)])[0]
             
-            # En yüksek olasılıklı sınıfın indeksi ve yüzdesi
             max_idx = np.argmax(probabilities)
             confidence = probabilities[max_idx] * 100
             ham_tahmin = model.classes_[max_idx]
 
-           # 1. Filtreleme Katmanı
+            # 1. Filtreleme Katmanı
             kararli_harf = filtreli_tahmini_bul(ham_tahmin)
 
+            # --- MODEL 'SPACE' DÖNDÜRÜRSE GERÇEK BOŞLUĞA ÇEVİR ---
+            if str(kararli_harf).lower() == 'space':
+                kararli_harf = ' '
+
             # 2. Anlık Harfi Ekrana Yaz
-            metin = f"Harf: {kararli_harf} (%{confidence:.1f})"
+            gosterilecek_harf = "[BOŞLUK]" if kararli_harf == ' ' else kararli_harf
+            metin = f"Harf: {gosterilecek_harf} (%{confidence:.1f})"
             cv2.putText(image, metin, (20, 80),
                         cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3)
 
@@ -113,7 +116,6 @@ while cap.isOpened():
                     kararli_harf, son_harf, baslangic_zamani, mevcut_kelime, harf_eklendi_mi
                 )
             else:
-                # Güven %50'nin altındaysa zamanlayıcıyı sıfırla ki hatalı harf birikmesin
                 baslangic_zamani = time.time()
 
             # 4. Oluşan Kelimeyi Ekranın Altına Yaz
@@ -143,9 +145,15 @@ while cap.isOpened():
         harf_eklendi_mi = False
         print("Kelime sıfırlandı!")
 
-    # 's' tuşuna basılırsa biriken kelimeyi seslendir
+    # 's' tuşuna basılırsa biriken kelimeyi SESLENDİR
     if key == ord('s'):
-        kelimeyi_seslendir(mevcut_kelime)
+        # 'space' sözcüklerini gerçek boşluğa çevir ve fazla boşlukları temizle
+        okunacak_metin = mevcut_kelime.replace('space', ' ').replace('SPACE', ' ')
+        okunacak_metin = ' '.join(okunacak_metin.split())
+        
+        # Eğer metin boş değilse arka planda seslendir (kamera donmaz)
+        if okunacak_metin:
+            threading.Thread(target=kelimeyi_seslendir, args=(okunacak_metin,), daemon=True).start()
 
 cap.release()
 cv2.destroyAllWindows()
