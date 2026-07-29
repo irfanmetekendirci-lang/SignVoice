@@ -72,7 +72,7 @@ Filtreleme Katmanı: Tahmin güven oranı %50'nin altında kalan kararsız harfl
 - **Veri Analizi:** `Pandas`, `NumPy`
 - **Yapay Zeka Seslendirme (TTS):** `Edge-TTS`, `Pygame`, `Asyncio`
 
----
+---gitt
 
 ### 🛠️ Installation & Setup / Kurulum
 
