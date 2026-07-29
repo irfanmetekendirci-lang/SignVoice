@@ -132,7 +132,7 @@ def kelimeyi_seslendir(metin):
 
     async def _ses_ureteci():
         # tr-TR-AhmetNeural veya tr-TR-EmelNeural kullanabilirsin
-        VOICE = "tr-TR-AhmetNeural" 
+        VOICE = "en-US-GuyNeural"
         OUTPUT_FILE = "temp_ses.mp3"
         
         communicate = edge_tts.Communicate(metin, VOICE)

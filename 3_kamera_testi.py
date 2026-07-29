@@ -27,8 +27,17 @@ hands = mp_hands.Hands(
     min_tracking_confidence=0.5
 )
 
-# --- 3. KAMERA BAŞLATMA ---
+# --- 3. KAMERA BAŞLATMA VE ÇÖZÜNÜRLÜK AYARI ---
 cap = cv2.VideoCapture(0)
+
+# Kamera donanım çözünürlüğünü 1280x720 (16:9 HD) yapıyoruz
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+# Pencere adını ve boyutunu sabitleyerek tam oran almasını sağlıyoruz
+pencere_adi = 'SignVoice - Canli Kamera Testi'
+cv2.namedWindow(pencere_adi, cv2.WINDOW_NORMAL)
+cv2.resizeWindow(pencere_adi, 1280, 720)
 
 tahmin_havuzu = deque(maxlen=7)  
 
@@ -130,7 +139,7 @@ while cap.isOpened():
                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 165, 255), 3)
         tahmin_havuzu.clear()
 
-    cv2.imshow('SignVoice - Canlı Kamera Testi', image)
+    cv2.imshow(pencere_adi, image)
 
     key = cv2.waitKey(1) & 0xFF
 
