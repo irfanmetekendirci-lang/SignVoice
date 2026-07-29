@@ -42,26 +42,46 @@ SignVoice/
 ├── 3_kamera_testi.py       # Real-time webcam inference with confidence scores
 ├── isaret_dili_verileri.csv# Processed 154-feature dataset (Generated)
 └── isaret_dili_modeli.p   # Trained Random Forest classifier binary (Generated)
+```
+
+---
+
+### ⚙️ Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/irfanmetekendirci-lang/SignVoice.git](https://github.com/irfanmetekendirci-lang/SignVoice.git)
+   cd SignVoice
+   ```
+
+2. **Install required packages:**
+   ```bash
+   pip install opencv-python mediapipe scikit-learn pandas numpy edge-tts pygame
+   ```
+
+3. **Run real-time webcam inference:**
+   ```bash
+   python 3_kamera_testi.py
+   ```
 
 ---
 
 <a name="türkçe"></a>
-🇹🇷 Türkçe
-📌 Proje Hakkında
-SignVoice (v1.1.0), Türk İşaret Dili (TİD) hareketlerini gerçek zamanlı olarak algılayan, metne dönüştüren ve sesli olarak seslendiren bir bilgisayarlı görü (Computer Vision) projesidir. MediaPipe kullanarak ellerin 3 boyutlu eklem noktalarını çıkarır ve Makine Öğrenmesi algoritmalarıyla sınıflandırarak kamera üzerinden düşük gecikmeyle yüksek doğrulukta tahmin üretir.
+## 🇹🇷 Türkçe
 
-🚀 Mühendislik Detayları:
+### 📌 Proje Hakkında
+**SignVoice (v1.1.0)**, **Türk İşaret Dili (TİD)** hareketlerini gerçek zamanlı olarak algılayan, metne dönüştüren ve sesli olarak seslendiren bir bilgisayarlı görü (Computer Vision) projesidir. MediaPipe kullanarak ellerin 3 boyutlu eklem noktalarını çıkarır ve Makine Öğrenmesi algoritmalarıyla sınıflandırarak kamera üzerinden düşük gecikmeyle yüksek doğrulukta tahmin üretir.
 
-Konumsal Normalizasyon: Elde edilen koordinatlara Min-Max Konumsal Normalizasyon uygulanarak elin konumundan bağımsızlık sağlanmış ve model başarımı %80.14'ten %88.49'a çıkarılmıştır.
+> 🚀 **Mühendislik Detayları:** 
+> - **Konumsal Normalizasyon:** Elde edilen koordinatlara **Min-Max Konumsal Normalizasyon** uygulanarak elin konumundan bağımsızlık sağlanmış ve model başarımı **%80.14'ten %88.49'a çıkarılmıştır.**
+> - **Zamanlayıcı ve Doğal Seslendirme:** Kararsız tahminleri süzmek için **%50 güven eşiği** (confidence threshold) ve zamanlayıcı algoritması eklenmiş; oluşan kelimeler Microsoft Edge-TTS'in yapay zeka Türkçe ses modeli (`tr-TR-AhmetNeural`) ile insan sesine yakın kalitede seslendirilmiştir.
 
-Zamanlayıcı ve Doğal Seslendirme: Kararsız tahminleri süzmek için %50 güven eşiği (confidence threshold) ve zamanlayıcı algoritması eklenmiş; oluşan kelimeler Microsoft Edge-TTS'in yapay zeka Türkçe ses modeli (tr-TR-AhmetNeural) ile insan sesine yakın kalitede seslendirilmiştir.
+---
 
-📊 Veri Seti ve Özellik Mühendisliği (Feature Engineering)
-Toplam Veri: İşlenmiş 34.849 satırlık özel veri seti.
-
-Nokta Tespiti: Ekran üzerindeki her bir el için 21 adet 3D eklem noktası (X, Y, Z) takip edilir. Çift el desteği ile toplamda 126 konumsal nitelik işlenir.
-
-Filtreleme Katmanı: Tahmin güven oranı %50'nin altında kalan kararsız harfler süzülerek kelimeye gürültü eklenmesi engellenir
+### 📊 Veri Seti ve Özellik Mühendisliği (Feature Engineering)
+- **Toplam Veri:** İşlenmiş **34.849 satırlık** özel veri seti.
+- **Nokta Tespiti:** Ekran üzerindeki her bir el için 21 adet 3D eklem noktası (X, Y, Z) takip edilir. Çift el desteği ile toplamda **126 konumsal nitelik** işlenir.
+- **Filtreleme Katmanı:** Tahmin güven oranı %50'nin altında kalan kararsız harfler süzülerek kelimeye gürültü eklenmesi engellenir.
 
 ---
 
@@ -72,24 +92,28 @@ Filtreleme Katmanı: Tahmin güven oranı %50'nin altında kalan kararsız harfl
 - **Veri Analizi:** `Pandas`, `NumPy`
 - **Yapay Zeka Seslendirme (TTS):** `Edge-TTS`, `Pygame`, `Asyncio`
 
----gitt
+---
 
-### 🛠️ Installation & Setup / Kurulum
+### ⚙️ Kurulum ve Kullanım
 
-- **Clone the repository / Repoyu klonlayın:**
-git clone https://github.com/irfanmetekendirci-lang/SignVoice.git
-cd SignVoice
+1. **Repoyu klonlayın:**
+   ```bash
+   git clone [https://github.com/irfanmetekendirci-lang/SignVoice.git](https://github.com/irfanmetekendirci-lang/SignVoice.git)
+   cd SignVoice
+   ```
 
-- **Install required packages / Gerekli kütüphaneleri yükleyin:**
-pip install opencv-python mediapipe scikit-learn pandas numpy edge-tts pygame
+2. **Gerekli kütüphaneleri yükleyin:**
+   ```bash
+   pip install opencv-python mediapipe scikit-learn pandas numpy edge-tts pygame
+   ```
 
-- **Run real-time webcam inference / Kamera testini başlatın:**
-python 3_kamera_testi.py
+3. **Kamera testini başlatın:**
+   ```bash
+   python 3_kamera_testi.py
+   ```
 
-### ⌨️ Klavye Kısayolları / Controls:
+### ⌨️ Klavye Kısayolları
 
-- **s**: Ekranda biriken kelimeyi seslendirir.
-
-- **c:** Ekranda biriken kelimeyi sıfırlar/temizler.
-
-- **q:** Kamerayı ve uygulamayı kapatır.
+* **`s`**: Ekranda biriken kelimeyi seslendirir.
+* **`c`**: Ekranda biriken kelimeyi sıfırlar/temizler.
+* **`q`**: Kamerayı ve uygulamayı kapatır.
