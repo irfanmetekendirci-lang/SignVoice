@@ -7,6 +7,8 @@
 <a name="english"></a>
 ## 🇬🇧 English
 
+![SignVoice Demo](demo.gif)
+
 ### 📌 About The Project
 **SignVoice (v1.1.0)** is a real-time computer vision system designed to recognize and translate **Turkish Sign Language (TİD)** gestures into text and spoken audio. By extracting 3D hand landmark spatial data using MediaPipe and classifying it with Machine Learning algorithms, it achieves high-accuracy recognition with near-zero latency via webcam input.
 
