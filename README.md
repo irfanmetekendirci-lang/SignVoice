@@ -1,4 +1,4 @@
-# ✌️ SignVoice - Turkish Sign Language (TİD) Recognition System (v1.1.0)
+# 🤘 SignVoice - Turkish Sign Language (TİD) Recognition System (v1.1.0)
 
 [English](#english) | [Türkçe](#türkçe)
 
