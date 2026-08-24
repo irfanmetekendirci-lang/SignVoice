@@ -3,3 +3,9 @@
 dataset/
 .vscode/
 tempCodeRunnerFile.py
+build/
+dist/
+*.spec
+*.p
+*.csv
+__pycache__/
